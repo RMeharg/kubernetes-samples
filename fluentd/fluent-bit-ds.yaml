@@ -1,34 +1,41 @@
-apiVersion: apps/v1
+apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
   name: fluent-bit
-  namespace: kube-system
+  namespace: logging
   labels:
-    component: fluent-bit-logging
+    k8s-app: fluent-bit-logging
     version: v1
     kubernetes.io/cluster-service: "true"
 spec:
-  selector:
-    matchLabels:
-      component: fluent-bit-logging
   template:
     metadata:
       labels:
-        component: fluent-bit-logging
+        k8s-app: fluent-bit-logging
         version: v1
         kubernetes.io/cluster-service: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "2020"
+        prometheus.io/path: /api/v1/metrics/prometheus
     spec:
       containers:
       - name: fluent-bit
-        image: fluent/fluent-bit:0.12.17 # 0.13.4 latest
+        image: fluent/fluent-bit:0.13.4
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 2020
         env:
         - name: FLUENT_ELASTICSEARCH_HOST
-          value: "elasticsearch" # the name of the previous es-svc.yml
+          value: "10.219.202.9"
         - name: FLUENT_ELASTICSEARCH_PORT
-          value: "9200" # the port of the previous es-svc.yml
+          value: "9200"
         volumeMounts:
         - name: varlog
           mountPath: /var/log
+        - name: varvcap
+          mountPath: /var/vcap
+          readOnly: true
         - name: varlibdockercontainers
           mountPath: /var/lib/docker/containers
           readOnly: true
@@ -39,12 +46,15 @@ spec:
       - name: varlog
         hostPath:
           path: /var/log
+      - name: varvcap
+        hostPath:
+          path: /var/vcap
       - name: varlibdockercontainers
         hostPath:
           path: /var/lib/docker/containers
       - name: fluent-bit-config
         configMap:
-          name: fluent-bit-config # name of the previously created ConfigMap
+          name: fluent-bit-config
       serviceAccountName: fluent-bit
       tolerations:
       - key: node-role.kubernetes.io/master
