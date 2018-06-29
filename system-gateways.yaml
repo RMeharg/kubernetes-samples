@@ -1,0 +1,131 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: prometheus-gateway
+  namespace: prometheus
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - prometheus-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /prometheus
+    route:
+    - destination:
+        host: kube-prometheus-grafana
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: prometheus-collector
+  namespace: prometheus
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - prometheus-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /prometheus-collector
+    route:
+    - destination:
+        host: kube-prometheus
+        port:
+          number: 9090
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: istio-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "istio.pks.dojo3.coinfra.net"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: istio
+  namespace: istio-system
+spec:
+  hosts:
+  - "istio.pks.dojo3.coinfra.net"
+  gateways:
+  - istio-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /istio
+    route:
+    - destination:
+        host: grafana
+        port:
+          number: 3000
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: istio-servicegraph
+  namespace: istio-system
+spec:
+  hosts:
+  - "istio.pks.dojo3.coinfra.net"
+  gateways:
+  - istio-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /istio-servicegraph
+    route:
+    - destination:
+        host: servicegraph
+        port:
+          number: 8088
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: istio-tracing
+  namespace: istio-system
+spec:
+  hosts:
+  - "istio.pks.dojo3.coinfra.net"
+  gateways:
+  - istio-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /istio-tracing
+    route:
+    - destination:
+        host: tracing
+        port:
+          number: 80

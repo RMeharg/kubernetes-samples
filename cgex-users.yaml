@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: selo
+  namespace: cgex
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: younghan
+  namespace: cgex
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: cgex-edit-binding
+  namespace: cgex
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: selo
+  namespace: cgex 
+- kind: ServiceAccount
+  name: younghan
+  namespace: cgex 

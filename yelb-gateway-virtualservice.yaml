@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: yelb-gateway
+  namespace: yelb
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      name: http
+      protocol: HTTP
+    hosts:
+    - "yelb.pks.dojo3.coinfra.net"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: yelb
+  namespace: yelb
+spec:
+  hosts:
+  - "yelb.pks.dojo3.coinfra.net"
+  gateways:
+  - yelb-gateway
+  - mesh
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: yelb-ui
+        port:
+          number: 80

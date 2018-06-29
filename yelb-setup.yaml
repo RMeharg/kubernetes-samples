@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yelb
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: yelb-user
+  namespace: yelb
+---
+# Create PSP Restricted ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: psp:restricted
+rules:
+- apiGroups:
+  - extensions
+  resourceNames:
+  - restricted
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+---
+# Give default developer/edit permissions for a namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: yelb-user:edit
+  namespace: yelb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: yelb-user
+  namespace: yelb
+---
+# Give PodSecurityPolicy permissions for a namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: yelb-user:psp:restricted
+  namespace: yelb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: psp:restricted
+subjects:
+- kind: ServiceAccount
+  name: yelb-user
+  namespace: yelb
+# Verify: kubectl --as=system:serviceaccount:yelb:yelb-user -n yelb auth can-i use podsecuritypolicy/restricted
+
